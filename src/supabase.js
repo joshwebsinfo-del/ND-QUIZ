@@ -143,9 +143,16 @@ export const subscribeToLeaderboard = (callback) => {
   if (!isConfigured) {
     return { unsubscribe: () => {} };
   }
+
+  const wrappedCallback = (payload) => {
+    const record = payload?.new || payload?.record || payload?.event?.data?.new || payload?.event?.data?.record;
+    if (!record) return;
+    callback(record);
+  };
+
   return supabase
     .channel('leaderboard_changes')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'quiz_scores' }, callback)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'quiz_scores' }, wrappedCallback)
     .subscribe();
 };
 

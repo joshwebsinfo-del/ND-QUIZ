@@ -9,10 +9,12 @@ export const getProgress = (userId) => {
   return {}; // Returns an object like { "hw-lo1-repair": { score: 18, passed: true } }
 };
 
+export const PASS_THRESHOLD = 85;
+
 export const saveProgress = (userId, quizId, score, total) => {
   const currentProgress = getProgress(userId);
   const percentage = (score / total) * 100;
-  const passed = percentage >= 70; // 70% to pass and unlock next
+  const passed = percentage >= PASS_THRESHOLD; // 85% to pass and unlock next
 
   // Only update if they got a higher score or it's their first time
   if (!currentProgress[quizId] || currentProgress[quizId].score < score) {

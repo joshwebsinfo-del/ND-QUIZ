@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Layers, RotateCcw, Share2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { saveProgress } from '../utils/progress';
+import { saveProgress, PASS_THRESHOLD } from '../utils/progress';
 import { saveScoreToSupabase } from '../supabase';
 import { modulesData } from '../data/modules';
 import { playSuccessSound, playFailSound } from '../utils/sound';
@@ -12,7 +12,7 @@ export default function Results({ user }) {
   const navigate = useNavigate();
   const { score = 0, total = 0, quizId = null, quizTitle = '' } = location.state || {};
   const percentage = Math.round((score / total) * 100) || 0;
-  const passed = percentage >= 70;
+  const passed = percentage >= PASS_THRESHOLD;
 
   useEffect(() => {
     const userId = user?.id || user?.uid;
@@ -65,8 +65,8 @@ export default function Results({ user }) {
         </div>
 
         {passed
-          ? <p className="results-msg pass">🎉 Excellent! The next quiz is now unlocked.</p>
-          : <p className="results-msg fail">Score at least 70% to unlock the next quiz. Keep practising!</p>
+          ? <p className="results-msg pass">🎉 Excellent! You scored {percentage}% — the next quiz is unlocked.</p>
+          : <p className="results-msg fail">Score at least {PASS_THRESHOLD}% to unlock the next quiz. Keep practising!</p>
         }
 
         <div className="results-actions">
