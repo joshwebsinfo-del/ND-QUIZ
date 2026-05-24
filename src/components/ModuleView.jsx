@@ -13,7 +13,8 @@ export default function ModuleView({ user }) {
 
   const allQuizzes = getAllQuizzes();
   const moduleQuizzes = moduleInfo.quizzes.map(id => allQuizzes.find(q => q.id === id)).filter(Boolean);
-  const progress = getProgress(user.uid);
+  const userId = user?.id || user?.uid;
+  const progress = getProgress(userId);
 
   return (
     <div className="module-view-page animate-fade-in">

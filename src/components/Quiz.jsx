@@ -27,7 +27,8 @@ export default function Quiz({ user }) {
       const parentModule = modulesData.find(m => m.quizzes.includes(quizId));
       if (parentModule) {
         const quizIndex = parentModule.quizzes.indexOf(quizId);
-        const progress = getProgress(user?.uid);
+        const userId = user?.id || user?.uid;
+        const progress = getProgress(userId);
         const isLocked = quizIndex > 0 && !progress[parentModule.quizzes[quizIndex - 1]]?.passed;
         
         if (isLocked) {
