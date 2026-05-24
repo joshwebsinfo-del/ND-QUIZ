@@ -5,6 +5,7 @@ import confetti from 'canvas-confetti';
 import { saveProgress } from '../utils/progress';
 import { saveScoreToSupabase } from '../supabase';
 import { modulesData } from '../data/modules';
+import { playSuccessSound, playFailSound } from '../utils/sound';
 
 export default function Results({ user }) {
   const location = useLocation();
@@ -23,6 +24,9 @@ export default function Results({ user }) {
       setTimeout(() => {
         confetti({ particleCount: 120, spread: 100, origin: { y: 0.5 }, colors: ['#4f46e5', '#10b981', '#f59e0b', '#ec4899'] });
       }, 200);
+      playSuccessSound();
+    } else {
+      playFailSound();
     }
   }, []);
 
@@ -33,8 +37,8 @@ export default function Results({ user }) {
 
   return (
     <div className="results-page animate-fade-in">
-      <div className="results-card">
-        <h2 className="results-title">Quiz Complete!</h2>
+      <div className="results-card card card-animate">
+        <h2 className="results-title rainbow-text">Quiz Complete!</h2>
         <p className="results-quiz-name">{quizTitle}</p>
 
         {/* Circular score */}

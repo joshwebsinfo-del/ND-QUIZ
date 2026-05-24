@@ -35,8 +35,11 @@ const AdminPanel = () => {
     <div className="admin-panel" style={{ padding: '2rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.5rem' }}>
         <div>
-          <h2>Admin Panel</h2>
+          <h2 className="rainbow-text">Admin Panel</h2>
           <p style={{ color: 'var(--text-muted)', margin: 0 }}>View user performance, leaderboards, and recent quiz activity.</p>
+        </div>
+        <div className="admin-status-badge" style={{ marginLeft: 'auto' }}>
+          Admin All Rights
         </div>
       </div>
 

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, BookOpen, Trophy } from 'lucide-react';
 import { logoutUser } from '../utils/auth';
+import { isAdmin } from '../utils/admin';
 import { modulesData } from '../data/modules';
 import Leaderboard from './Leaderboard';
 import ThemeSwitcher from './ThemeSwitcher';
@@ -9,6 +10,10 @@ import ThemeSwitcher from './ThemeSwitcher';
 export default function Dashboard({ user, setUser }) {
   const navigate = useNavigate();
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [secretClicks, setSecretClicks] = useState(0);
+  const [showAdminSecret, setShowAdminSecret] = useState(false);
+  const secretTimerRef = useRef(null);
+  const canUnlockAdmin = isAdmin(user?.email);
 
   useEffect(() => {
     const handleBeforeInstall = (e) => {
@@ -25,6 +30,12 @@ export default function Dashboard({ user, setUser }) {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      clearTimeout(secretTimerRef.current);
+    };
+  }, []);
+
   const handleInstall = async () => {
     if (!installPrompt) return;
     installPrompt.prompt();
@@ -34,21 +45,36 @@ export default function Dashboard({ user, setUser }) {
     }
   };
 
+  const handleSecretTap = () => {
+    if (!canUnlockAdmin) return;
+    setSecretClicks((prev) => {
+      const next = prev + 1;
+      if (next >= 7) {
+        setShowAdminSecret(true);
+      }
+      return next;
+    });
+    clearTimeout(secretTimerRef.current);
+    secretTimerRef.current = window.setTimeout(() => {
+      setSecretClicks(0);
+    }, 4000);
+  };
+
   const handleLogout = () => {
     logoutUser();
     setUser(null);
     navigate('/');
   };
 
-  const isAdmin = user?.isAdmin === true;
+  const isAdminUser = user?.isAdmin === true;
 
   return (
     <div className="animate-fade-in">
       <nav className="navbar">
-        <div className="nav-brand">
+        <button type="button" className="nav-brand secret-trigger" onClick={handleSecretTap}>
           <BookOpen size={22} />
           ND IT 1.1 Portal
-        </div>
+        </button>
         <div className="user-profile">
           <ThemeSwitcher />
           {installPrompt && (
@@ -56,9 +82,14 @@ export default function Dashboard({ user, setUser }) {
               Install App
             </button>
           )}
-          {isAdmin && (
+          {isAdminUser && (
             <button className="btn btn-outline btn-sm" onClick={() => navigate('/admin')} style={{ marginRight: '0.75rem' }}>
               Admin Panel
+            </button>
+          )}
+          {showAdminSecret && (
+            <button className="btn btn-primary btn-sm" onClick={() => navigate('/admin')} style={{ marginRight: '0.75rem' }}>
+              Secret Admin Portal
             </button>
           )}
           <span className="user-name">{user?.displayName?.split(' ')[0]}</span>
@@ -74,10 +105,18 @@ export default function Dashboard({ user, setUser }) {
       </nav>
 
       <div className="dashboard-layout container">
+        {canUnlockAdmin && secretClicks > 0 && !showAdminSecret && (
+          <div className="admin-secret-hint animate-slide-in">
+            🔐 Tap the logo {7 - secretClicks} more time{7 - secretClicks === 1 ? '' : 's'} to unlock admin access.
+          </div>
+        )}
         <div className="modules-section">
           <div className="section-header">
-            <h2>Your Modules</h2>
+            <h2 className="rainbow-text">Your Modules</h2>
             <p className="text-muted">Select a module to begin quizzing</p>
+            {user?.isAdmin && (
+              <div className="admin-status-badge">Admin Super Access</div>
+            )}
           </div>
           <div className="modules-grid">
             {modulesData.map((mod, i) => (
