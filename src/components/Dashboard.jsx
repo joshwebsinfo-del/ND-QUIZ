@@ -4,6 +4,7 @@ import { LogOut, BookOpen, Trophy } from 'lucide-react';
 import { logout } from '../firebase';
 import { modulesData } from '../data/modules';
 import Leaderboard from './Leaderboard';
+import ThemeSwitcher from './ThemeSwitcher';
 
 export default function Dashboard({ user, setUser }) {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export default function Dashboard({ user, setUser }) {
           ND IT 1.1 Portal
         </div>
         <div className="user-profile">
+          <ThemeSwitcher />
           <span className="user-name">{user?.displayName?.split(' ')[0]}</span>
           <img src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'U')}&background=4f46e5&color=fff`} alt="Profile" className="avatar" />
           <button className="btn btn-outline btn-sm" onClick={handleLogout}>

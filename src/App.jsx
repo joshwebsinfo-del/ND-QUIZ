@@ -6,9 +6,11 @@ import ModuleView from './components/ModuleView';
 import Quiz from './components/Quiz';
 import Results from './components/Results';
 import './index.css';
+import './mobile-enhancements.css';
 import Footer from './components/Footer';
 import AdminPanel from './components/AdminPanel';
 import { isAdmin } from './utils/admin';
+import { ThemeProvider } from './context/ThemeContext';
 
 const PrivateRoute = ({ user, children }) => {
   if (!user) return <Navigate to="/" replace />;
@@ -44,7 +46,7 @@ function App() {
   }
 
   return (
-    <>
+    <ThemeProvider>
       <Router>
         <Routes>
           <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Login setUser={setUser} />} />
@@ -57,7 +59,7 @@ function App() {
         </Routes>
       </Router>
       <Footer />
-    </>
+    </ThemeProvider>
   );
 }
 
