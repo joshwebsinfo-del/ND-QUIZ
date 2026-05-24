@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+﻿import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -147,4 +147,41 @@ export const subscribeToLeaderboard = (callback) => {
     .channel('leaderboard_changes')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'quiz_scores' }, callback)
     .subscribe();
+};
+
+// Admin helpers
+export const deleteScore = async (criteria = {}) => {
+  if (!isConfigured) return { error: 'Supabase not configured' };
+  try {
+    const { error } = await supabase.from('quiz_scores').delete().match(criteria);
+    return { error };
+  } catch (err) {
+    console.error('deleteScore error', err);
+    return { error: err };
+  }
+};
+
+export const deleteUser = async (userId) => {
+  if (!isConfigured) return { error: 'Supabase not configured' };
+  try {
+    // remove user's quiz scores then profile
+    const { error: e1 } = await supabase.from('quiz_scores').delete().eq('user_id', userId);
+    const { error: e2 } = await supabase.from('profiles').delete().eq('id', userId);
+    return { error: e1 || e2 };
+  } catch (err) {
+    console.error('deleteUser error', err);
+    return { error: err };
+  }
+};
+
+export const fetchProfiles = async () => {
+  if (!isConfigured) return [];
+  try {
+    const { data, error } = await supabase.from('profiles').select('*').limit(500);
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('fetchProfiles error', err);
+    return [];
+  }
 };
