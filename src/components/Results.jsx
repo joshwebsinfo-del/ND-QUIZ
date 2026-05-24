@@ -14,8 +14,9 @@ export default function Results({ user }) {
   const passed = percentage >= 70;
 
   useEffect(() => {
-    if (quizId && user) {
-      saveProgress(user.uid, quizId, score, total);
+    const userId = user?.id || user?.uid;
+    if (quizId && userId) {
+      saveProgress(userId, quizId, score, total);
       saveScoreToSupabase(user, quizId, quizTitle, score, total);
     }
     if (passed) {

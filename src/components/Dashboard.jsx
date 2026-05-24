@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, BookOpen, Trophy } from 'lucide-react';
-import { logout } from '../firebase';
+import { signOutUser } from '../supabase';
 import { modulesData } from '../data/modules';
 import Leaderboard from './Leaderboard';
 import ThemeSwitcher from './ThemeSwitcher';
@@ -10,10 +10,12 @@ export default function Dashboard({ user, setUser }) {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await logout();
+    await signOutUser();
     setUser(null);
     navigate('/');
   };
+
+  const isAdmin = user?.email === 'joshuamujakari15@gmail.com';
 
   return (
     <div className="animate-fade-in">
@@ -24,8 +26,17 @@ export default function Dashboard({ user, setUser }) {
         </div>
         <div className="user-profile">
           <ThemeSwitcher />
+          {isAdmin && (
+            <button className="btn btn-outline btn-sm" onClick={() => navigate('/admin')} style={{ marginRight: '0.75rem' }}>
+              Admin Panel
+            </button>
+          )}
           <span className="user-name">{user?.displayName?.split(' ')[0]}</span>
-          <img src={user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'U')}&background=4f46e5&color=fff`} alt="Profile" className="avatar" />
+          <img
+            src={user?.avatar_url || user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.displayName || 'U')}&background=4f46e5&color=fff`}
+            alt="Profile"
+            className="avatar"
+          />
           <button className="btn btn-outline btn-sm" onClick={handleLogout}>
             <LogOut size={15} /> Logout
           </button>
@@ -33,7 +44,6 @@ export default function Dashboard({ user, setUser }) {
       </nav>
 
       <div className="dashboard-layout container">
-        {/* Left - Modules grid */}
         <div className="modules-section">
           <div className="section-header">
             <h2>Your Modules</h2>
@@ -64,7 +74,6 @@ export default function Dashboard({ user, setUser }) {
           </div>
         </div>
 
-        {/* Right - Leaderboard */}
         <div className="sidebar-section">
           <Leaderboard />
         </div>
