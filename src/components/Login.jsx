@@ -125,6 +125,9 @@ export default function Login({ setUser }) {
 
         <p className="login-note">
           🔒 Accounts are saved locally and synced to Supabase profiles if configured.
+          { !installPrompt && (
+            <><br />If install is not available here, use your browser menu and choose "Install app".</>
+          ) }
         </p>
       </div>
     </div>
