@@ -49,6 +49,9 @@ function App() {
 
   return (
     <ThemeProvider>
+      <div className="app-brand-banner">
+        <span>JOSHWEBS</span>
+      </div>
       <Router>
         <Routes>
           <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Login setUser={setUser} />} />

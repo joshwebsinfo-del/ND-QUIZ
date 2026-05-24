@@ -40,7 +40,7 @@ export default function Leaderboard() {
     load();
 
     channelRef.current = subscribeToLeaderboard((payload) => {
-      const entry = payload.new;
+      const entry = payload.new || payload.record || payload?.event?.data?.new;
       if (!entry) return;
       setNewEntry(entry);
       setTimeout(() => setNewEntry(null), 3000);

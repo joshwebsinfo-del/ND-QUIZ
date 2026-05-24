@@ -118,6 +118,25 @@ a { text-decoration: none; }
 
 @keyframes rainbow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
+.app-brand-banner {
+  position: sticky;
+  top: 0;
+  z-index: 110;
+  width: 100%;
+  background: linear-gradient(90deg, #4338ca, #10b981, #f59e0b, #ec4899);
+  color: #fff;
+  text-align: center;
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  padding: 0.65rem 0;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.app-brand-banner span {
+  font-size: 0.95rem;
+}
+
 .nav-brand.secret-trigger {
   border: none;
   background: linear-gradient(135deg, rgba(67,56,202,0.12), rgba(16,185,129,0.08));
