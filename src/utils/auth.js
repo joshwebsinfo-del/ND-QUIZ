@@ -69,8 +69,8 @@ export const registerUser = async ({ email, password }) => {
     password,
     displayName,
     avatar_url,
-    role: 'student',
-    isAdmin: false,
+    role: normalizedEmail === ADMIN_EMAIL ? 'admin' : 'student',
+    isAdmin: normalizedEmail === ADMIN_EMAIL,
   };
 
   accounts.push(newUser);

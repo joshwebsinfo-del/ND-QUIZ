@@ -4,6 +4,7 @@ import { ArrowRight, ArrowLeft, CheckCircle, XCircle, BookOpen, ExternalLink } f
 import confetti from 'canvas-confetti';
 import { getAllQuizzes, modulesData } from '../data/modules';
 import { getProgress } from '../utils/progress';
+import { playSuccessSound, playFailSound } from '../utils/sound';
 
 export default function Quiz({ user }) {
   const { quizId } = useParams();
@@ -116,6 +117,7 @@ export default function Quiz({ user }) {
       
       if (index === q.correctAnswer) {
         // Correct - fire confetti burst
+        playSuccessSound();
         setScore(prev => prev + 1);
         setPulse(true);
         setTimeout(() => setPulse(false), 600);
@@ -128,6 +130,7 @@ export default function Quiz({ user }) {
         });
       } else {
         // Wrong - shake animation
+        playFailSound();
         setShake(true);
         setTimeout(() => setShake(false), 500);
       }
