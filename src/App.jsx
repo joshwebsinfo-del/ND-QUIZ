@@ -10,9 +10,8 @@ import AdminPanel from './components/AdminPanel';
 import Footer from './components/Footer';
 import './index.css';
 import './mobile-enhancements.css';
-import { isAdmin } from './utils/admin';
 import { ThemeProvider } from './context/ThemeContext';
-import { getSessionUser, handleOAuthRedirect } from './supabase';
+import { getCurrentUser } from './utils/auth';
 
 const PrivateRoute = ({ user, children }) => {
   if (!user) return <Navigate to="/" replace />;
@@ -24,45 +23,19 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const restoreSession = async () => {
-      let savedUser = null;
-      const saved = localStorage.getItem('quiz_user');
-
-      if (saved) {
-        try {
-          savedUser = JSON.parse(saved);
-          setUser(savedUser);
-        } catch (_) {
-          localStorage.removeItem('quiz_user');
-        }
-      }
-
-      const isOAuthRedirect = window.location.search.includes('access_token') || window.location.search.includes('refresh_token') || window.location.search.includes('code=');
-      if (!savedUser && isOAuthRedirect) {
-        const oauthUser = await handleOAuthRedirect();
-        if (oauthUser) {
-          setUser(oauthUser);
-          setLoading(false);
-          return;
-        }
-      }
-
-      if (!savedUser) {
-        const sessionUser = await getSessionUser();
-        if (sessionUser) {
-          setUser(sessionUser);
-        }
-      }
-
-      setLoading(false);
-    };
-
-    restoreSession();
+    const savedUser = getCurrentUser();
+    if (savedUser) {
+      setUser(savedUser);
+    }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
-    if (user) localStorage.setItem('quiz_user', JSON.stringify(user));
-    else localStorage.removeItem('quiz_user');
+    if (user) {
+      localStorage.setItem('quiz_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('quiz_user');
+    }
   }, [user]);
 
   if (loading) {
@@ -84,7 +57,7 @@ function App() {
           <Route path="/module/:moduleId" element={<PrivateRoute user={user}><ModuleView user={user} /></PrivateRoute>} />
           <Route path="/quiz/:quizId" element={<PrivateRoute user={user}><Quiz user={user} /></PrivateRoute>} />
           <Route path="/results" element={<PrivateRoute user={user}><Results user={user} /></PrivateRoute>} />
-          <Route path="/admin" element={isAdmin(user?.email) ? <AdminPanel /> : <Navigate to="/" replace />} />
+          <Route path="/admin" element={user?.isAdmin ? <AdminPanel /> : <Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

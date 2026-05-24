@@ -1,21 +1,46 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, BookOpen, Trophy } from 'lucide-react';
-import { signOutUser } from '../supabase';
+import { logoutUser } from '../utils/auth';
 import { modulesData } from '../data/modules';
 import Leaderboard from './Leaderboard';
 import ThemeSwitcher from './ThemeSwitcher';
 
 export default function Dashboard({ user, setUser }) {
   const navigate = useNavigate();
+  const [installPrompt, setInstallPrompt] = useState(null);
 
-  const handleLogout = async () => {
-    await signOutUser();
+  useEffect(() => {
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    const handleAppInstalled = () => setInstallPrompt(null);
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    if (choice.outcome === 'accepted') {
+      setInstallPrompt(null);
+    }
+  };
+
+  const handleLogout = () => {
+    logoutUser();
     setUser(null);
     navigate('/');
   };
 
-  const isAdmin = user?.email === 'joshuamujakari15@gmail.com';
+  const isAdmin = user?.isAdmin === true;
 
   return (
     <div className="animate-fade-in">
@@ -26,6 +51,11 @@ export default function Dashboard({ user, setUser }) {
         </div>
         <div className="user-profile">
           <ThemeSwitcher />
+          {installPrompt && (
+            <button className="btn btn-primary btn-sm" onClick={handleInstall} style={{ marginRight: '0.75rem' }}>
+              Install App
+            </button>
+          )}
           {isAdmin && (
             <button className="btn btn-outline btn-sm" onClick={() => navigate('/admin')} style={{ marginRight: '0.75rem' }}>
               Admin Panel
