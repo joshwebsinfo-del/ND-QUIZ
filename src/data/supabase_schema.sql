@@ -24,10 +24,50 @@ create table if not exists quiz_scores (
 );
 
 -- Allow public read access (so everyone can see leaderboard)
-create policy "Public read quiz_scores" on quiz_scores for select using (true);
-create policy "Users insert own scores" on quiz_scores for insert with check (true);
-create policy "Public read profiles" on profiles for select using (true);
-create policy "Users upsert own profile" on profiles for all using (true);
+DO
+$$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policy p
+    JOIN pg_class c ON p.polrelid = c.oid
+    WHERE c.relname = 'quiz_scores'
+      AND p.polname = 'Public read quiz_scores'
+  ) THEN
+    CREATE POLICY "Public read quiz_scores" ON quiz_scores FOR SELECT USING (true);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policy p
+    JOIN pg_class c ON p.polrelid = c.oid
+    WHERE c.relname = 'quiz_scores'
+      AND p.polname = 'Users insert own scores'
+  ) THEN
+    CREATE POLICY "Users insert own scores" ON quiz_scores FOR INSERT WITH CHECK (true);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policy p
+    JOIN pg_class c ON p.polrelid = c.oid
+    WHERE c.relname = 'profiles'
+      AND p.polname = 'Public read profiles'
+  ) THEN
+    CREATE POLICY "Public read profiles" ON profiles FOR SELECT USING (true);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policy p
+    JOIN pg_class c ON p.polrelid = c.oid
+    WHERE c.relname = 'profiles'
+      AND p.polname = 'Users upsert own profile'
+  ) THEN
+    CREATE POLICY "Users upsert own profile" ON profiles FOR ALL USING (true);
+  END IF;
+END
+$$;
 
 -- Enable RLS
 alter table quiz_scores enable row level security;
@@ -42,12 +82,53 @@ create table if not exists module_tutorials (
   video_embed_url text not null,
   saved_at timestamp with time zone default now()
 );
+create unique index if not exists module_tutorials_module_quiz_ux on module_tutorials(module_id, quiz_id);
 
 -- Public read access for tutorials
-create policy "Public read module_tutorials" on module_tutorials for select using (true);
-create policy "Authenticated modify module_tutorials" on module_tutorials for insert using (auth.role() = 'authenticated');
-create policy "Authenticated update module_tutorials" on module_tutorials for update using (auth.role() = 'authenticated');
-create policy "Authenticated delete module_tutorials" on module_tutorials for delete using (auth.role() = 'authenticated');
+DO
+$$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policy p
+    JOIN pg_class c ON p.polrelid = c.oid
+    WHERE c.relname = 'module_tutorials'
+      AND p.polname = 'Public read module_tutorials'
+  ) THEN
+    CREATE POLICY "Public read module_tutorials" ON module_tutorials FOR SELECT USING (true);
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policy p
+    JOIN pg_class c ON p.polrelid = c.oid
+    WHERE c.relname = 'module_tutorials'
+      AND p.polname = 'Authenticated modify module_tutorials'
+  ) THEN
+    CREATE POLICY "Authenticated modify module_tutorials" ON module_tutorials FOR INSERT TO authenticated WITH CHECK (auth.role() = 'authenticated');
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policy p
+    JOIN pg_class c ON p.polrelid = c.oid
+    WHERE c.relname = 'module_tutorials'
+      AND p.polname = 'Authenticated update module_tutorials'
+  ) THEN
+    CREATE POLICY "Authenticated update module_tutorials" ON module_tutorials FOR UPDATE USING (auth.role() = 'authenticated');
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policy p
+    JOIN pg_class c ON p.polrelid = c.oid
+    WHERE c.relname = 'module_tutorials'
+      AND p.polname = 'Authenticated delete module_tutorials'
+  ) THEN
+    CREATE POLICY "Authenticated delete module_tutorials" ON module_tutorials FOR DELETE USING (auth.role() = 'authenticated');
+  END IF;
+END
+$$;
 alter table module_tutorials enable row level security;
 
 -- Ensure the realtime publication exists and add tables when missing
