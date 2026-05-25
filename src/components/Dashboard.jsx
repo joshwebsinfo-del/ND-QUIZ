@@ -124,6 +124,12 @@ export default function Dashboard({ user, setUser }) {
             <button className="btn btn-outline" disabled style={{ cursor: 'not-allowed', opacity: 0.65 }}>
               View Module League Table (coming soon)
             </button>
+            <button className="btn btn-outline" onClick={() => navigate('/about')}>
+              About Us
+            </button>
+            <button className="btn btn-outline" onClick={() => navigate('/privacy')}>
+              Privacy Policy
+            </button>
           </div>
           <div className="modules-grid">
             {modulesData.map((mod, i) => (

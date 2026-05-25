@@ -9,6 +9,8 @@ import AdminLogin from './components/AdminLogin';
 import AdminPanel from './components/AdminPanel';
 import Leaderboard from './components/Leaderboard';
 import Footer from './components/Footer';
+import AboutUs from './components/AboutUs';
+import PrivacyPolicy from './components/PrivacyPolicy';
 import './index.css';
 import './mobile-enhancements.css';
 import { ThemeProvider } from './context/ThemeContext';
@@ -63,6 +65,8 @@ function App() {
           <Route path="/leaderboard" element={<PrivateRoute user={user}><Leaderboard /></PrivateRoute>} />
           <Route path="/results" element={<PrivateRoute user={user}><Results user={user} /></PrivateRoute>} />
           <Route path="/admin" element={user?.isAdmin ? <AdminPanel /> : <Navigate to="/" replace />} />
+          <Route path="/about" element={<PrivateRoute user={user}><AboutUs /></PrivateRoute>} />
+          <Route path="/privacy" element={<PrivateRoute user={user}><PrivacyPolicy /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
