@@ -118,8 +118,8 @@ export default function Dashboard({ user, setUser }) {
             )}
           </div>
           <div className="dashboard-actions" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <button className="btn btn-outline" onClick={() => navigate('/leaderboard')}>
-              View Module League Table
+            <button className="btn btn-outline" disabled style={{ cursor: 'not-allowed', opacity: 0.65 }}>
+              View Module League Table (coming soon)
             </button>
           </div>
           <div className="modules-grid">
