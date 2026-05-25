@@ -4,7 +4,6 @@ import { LogOut, BookOpen, Trophy } from 'lucide-react';
 import { logoutUser } from '../utils/auth';
 import { isAdmin } from '../utils/admin';
 import { modulesData } from '../data/modules';
-import Leaderboard from './Leaderboard';
 import ThemeSwitcher from './ThemeSwitcher';
 
 export default function Dashboard({ user, setUser }) {
@@ -118,6 +117,11 @@ export default function Dashboard({ user, setUser }) {
               <div className="admin-status-badge">Admin Super Access</div>
             )}
           </div>
+          <div className="dashboard-actions" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <button className="btn btn-outline" onClick={() => navigate('/leaderboard')}>
+              View Module League Table
+            </button>
+          </div>
           <div className="modules-grid">
             {modulesData.map((mod, i) => (
               <button
@@ -141,10 +145,6 @@ export default function Dashboard({ user, setUser }) {
               </button>
             ))}
           </div>
-        </div>
-
-        <div className="sidebar-section">
-          <Leaderboard />
         </div>
       </div>
     </div>

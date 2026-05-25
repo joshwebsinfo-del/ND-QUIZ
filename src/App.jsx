@@ -7,6 +7,7 @@ import Quiz from './components/Quiz';
 import Results from './components/Results';
 import AdminLogin from './components/AdminLogin';
 import AdminPanel from './components/AdminPanel';
+import Leaderboard from './components/Leaderboard';
 import Footer from './components/Footer';
 import './index.css';
 import './mobile-enhancements.css';
@@ -59,6 +60,7 @@ function App() {
           <Route path="/dashboard" element={<PrivateRoute user={user}><Dashboard user={user} setUser={setUser} /></PrivateRoute>} />
           <Route path="/module/:moduleId" element={<PrivateRoute user={user}><ModuleView user={user} /></PrivateRoute>} />
           <Route path="/quiz/:quizId" element={<PrivateRoute user={user}><Quiz user={user} /></PrivateRoute>} />
+          <Route path="/leaderboard" element={<PrivateRoute user={user}><Leaderboard /></PrivateRoute>} />
           <Route path="/results" element={<PrivateRoute user={user}><Results user={user} /></PrivateRoute>} />
           <Route path="/admin" element={user?.isAdmin ? <AdminPanel /> : <Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
