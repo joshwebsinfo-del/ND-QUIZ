@@ -113,6 +113,9 @@ export default function Dashboard({ user, setUser }) {
           <div className="section-header">
             <h2 className="rainbow-text">Your Modules</h2>
             <p className="text-muted">Select a module to begin quizzing</p>
+            <p className="text-muted" style={{ marginTop: '0.4rem' }}>
+              New tutorial feature: each module now includes admin-assigned video walkthroughs. Open a module and click any quiz's tutorial button to watch them in-app.
+            </p>
             {user?.isAdmin && (
               <div className="admin-status-badge">Admin Super Access</div>
             )}

@@ -17,6 +17,7 @@ export default function ModuleView({ user }) {
   const userId = user?.id || user?.uid;
   const progress = getProgress(userId);
   const [moduleTutorials, setModuleTutorials] = useState([]);
+  const hasTutorials = moduleTutorials.length > 0;
 
   useEffect(() => {
     let isActive = true;
@@ -57,7 +58,7 @@ export default function ModuleView({ user }) {
       </div>
 
       <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
-        {moduleTutorials.length > 0 && (
+        {hasTutorials && (
           <section id="module-tutorials" className="module-tutorials-section" style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
               <div>
@@ -97,6 +98,8 @@ export default function ModuleView({ user }) {
             const qProgress = progress[quiz.id];
             const pct = qProgress ? Math.round(qProgress.percentage) : null;
             const quizTutorial = moduleTutorials.find((item) => item.quizId === quiz.id);
+            const showTutorialButton = hasTutorials;
+            const tutorialButtonLabel = quizTutorial ? 'Watch tutorial for this topic' : 'View module tutorials';
 
             return (
               <div
@@ -140,9 +143,10 @@ export default function ModuleView({ user }) {
                       </div>
                     </div>
                   )}
-                  {quizTutorial && (
+
+                  {showTutorialButton && (
                     <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: '0.75rem' }} onClick={scrollToTutorials}>
-                      Watch tutorial for this topic
+                      {tutorialButtonLabel}
                     </button>
                   )}
                 </div>
