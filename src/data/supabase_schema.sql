@@ -23,32 +23,6 @@ create table if not exists quiz_scores (
   completed_at timestamp with time zone default now()
 );
 
--- Enable real-time for quiz_scores and module_tutorials only if not already added
-DO
-$$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM pg_publication_tables
-    WHERE pubname = 'supabase_realtime'
-      AND schemaname = 'public'
-      AND tablename = 'quiz_scores'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.quiz_scores;
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1
-    FROM pg_publication_tables
-    WHERE pubname = 'supabase_realtime'
-      AND schemaname = 'public'
-      AND tablename = 'module_tutorials'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.module_tutorials;
-  END IF;
-END
-$$;
-
 -- Allow public read access (so everyone can see leaderboard)
 create policy "Public read quiz_scores" on quiz_scores for select using (true);
 create policy "Users insert own scores" on quiz_scores for insert with check (true);
@@ -75,3 +49,29 @@ create policy "Authenticated modify module_tutorials" on module_tutorials for in
 create policy "Authenticated update module_tutorials" on module_tutorials for update using (auth.role() = 'authenticated');
 create policy "Authenticated delete module_tutorials" on module_tutorials for delete using (auth.role() = 'authenticated');
 alter table module_tutorials enable row level security;
+
+-- Enable real-time for quiz_scores and module_tutorials only if not already added
+DO
+$$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'quiz_scores'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.quiz_scores;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename = 'module_tutorials'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.module_tutorials;
+  END IF;
+END
+$$;
