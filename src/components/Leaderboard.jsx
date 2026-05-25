@@ -1,50 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Trophy, Zap, Medal, RefreshCw } from 'lucide-react';
+import { Trophy, Zap, RefreshCw } from 'lucide-react';
 import { fetchLeaderboard, subscribeToLeaderboard } from '../supabase';
 
 export default function Leaderboard() {
-  const [scores, setScores] = useState([]);
+  const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newEntry, setNewEntry] = useState(null);
   const channelRef = useRef(null);
 
-  const normalizeLeaderboard = (data) => {
-    const items = (data || []).map((row) => ({
-      ...row,
-      percentage: Number(row.percentage) || 0,
-      display_name: row.display_name || row.email || 'Student',
-      avatar_url: row.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(row.display_name || 'Student')}&background=4f46e5&color=fff`,
-      quiz_title: row.quiz_title || 'Quiz attempt',
-    }));
-
-    return Object.values(
-      items.reduce((acc, row) => {
-        const key = row.user_id || row.email || row.display_name;
-        if (!acc[key] || row.percentage > acc[key].percentage) {
-          acc[key] = row;
-        }
-        return acc;
-      }, {})
-    )
-      .sort((a, b) => b.percentage - a.percentage)
-      .slice(0, 50);
+  const formatDate = (iso) => {
+    if (!iso) return '-';
+    const date = new Date(iso);
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
   const load = async () => {
+    setLoading(true);
     const data = await fetchLeaderboard();
-    setScores(normalizeLeaderboard(data));
+    setModules(Array.isArray(data) ? data : []);
     setLoading(false);
   };
 
   useEffect(() => {
     load();
 
-    channelRef.current = subscribeToLeaderboard((payload) => {
-      const entry = payload.new || payload.record || payload?.event?.data?.new;
+    channelRef.current = subscribeToLeaderboard((entry) => {
       if (!entry) return;
       setNewEntry(entry);
       setTimeout(() => setNewEntry(null), 3000);
-      setScores((prev) => normalizeLeaderboard([entry, ...prev]));
+      load();
     });
 
     return () => {
@@ -52,18 +36,16 @@ export default function Leaderboard() {
     };
   }, []);
 
-  const medalColor = (i) => {
-    if (i === 0) return '#f59e0b';
-    if (i === 1) return '#94a3b8';
-    if (i === 2) return '#b45309';
-    return 'var(--text-muted)';
-  };
-
   return (
     <div className="leaderboard-panel">
       <div className="leaderboard-header">
         <Trophy size={20} color="#f59e0b" />
-        <h3>Live Leaderboard</h3>
+        <div>
+          <h3>Module League Table</h3>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Shared leaderboard across all learners, grouped by module.
+          </p>
+        </div>
         <button className="lb-refresh" onClick={load} title="Refresh">
           <RefreshCw size={14} />
         </button>
@@ -84,32 +66,48 @@ export default function Leaderboard() {
           <div className="lb-skeleton" />
           <div className="lb-skeleton" />
         </div>
-      ) : scores.length === 0 ? (
+      ) : modules.filter((mod) => mod.rows && mod.rows.length > 0).length === 0 ? (
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>
-          No scores yet. Be the first! 🏆
+          No leaderboard data yet. Finish a quiz to generate rankings.
         </p>
       ) : (
-        <ul className="lb-list">
-          {scores.map((s, i) => (
-            <li key={`${s.user_id || s.display_name}-${i}`} className="lb-item animate-fade-in" style={{ animationDelay: `${i * 0.04}s` }}>
-              <span className="lb-rank" style={{ color: medalColor(i) }}>
-                {i < 3 ? <Medal size={16} /> : `#${i + 1}`}
-              </span>
-              <img
-                src={s.avatar_url}
-                alt={s.display_name}
-                className="lb-avatar"
-              />
-              <div className="lb-info">
-                <span className="lb-name">{s.display_name}</span>
-                <span className="lb-quiz">{s.quiz_title.replace('LO', 'L').slice(0, 28)}</span>
+        modules.filter((mod) => mod.rows && mod.rows.length > 0).map((mod) => (
+          <div key={mod.module_id} className="lb-module-card" style={{ marginBottom: '1rem' }}>
+            <div className="lb-module-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div>
+                <h4 style={{ margin: 0 }}>{mod.module_title}</h4>
+                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{mod.rows.length} leaders</p>
               </div>
-              <div className="lb-score-pill" style={{ background: s.percentage >= 70 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: s.percentage >= 70 ? 'var(--secondary)' : 'var(--danger)' }}>
-                {s.percentage}%
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>League-style ranking</div>
+            </div>
+            <div className="lb-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div className="lb-row lb-row-head" style={{ display: 'grid', gridTemplateColumns: '40px 2fr 80px 70px 70px 70px', gap: '0.75rem', padding: '0.75rem 0', borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                <div>#</div>
+                <div>Player</div>
+                <div>Best %</div>
+                <div>Quizzes</div>
+                <div>Latest</div>
+                <div>Played</div>
               </div>
-            </li>
-          ))}
-        </ul>
+              {mod.rows.map((row, index) => (
+                <div key={`${mod.module_id}-${row.user_id || row.email}-${index}`} className="lb-row" style={{ display: 'grid', gridTemplateColumns: '40px 2fr 80px 70px 70px 70px', gap: '0.75rem', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid rgba(148,163,184,0.12)' }}>
+                  <div style={{ fontWeight: 700 }}>{index + 1}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <img src={row.avatar_url} alt={row.display_name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{row.display_name}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{row.latest_quiz_title || 'Quiz'}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontWeight: 700 }}>{row.best_percentage}%</div>
+                  <div>{row.quizzes_completed}</div>
+                  <div>{row.latest_percentage}%</div>
+                  <div>{formatDate(row.latest_played)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
       )}
     </div>
   );

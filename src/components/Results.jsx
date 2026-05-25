@@ -18,7 +18,10 @@ export default function Results({ user }) {
     const userId = user?.id || user?.uid;
     if (quizId && userId) {
       saveProgress(userId, quizId, score, total);
-      saveScoreToSupabase(user, quizId, quizTitle, score, total);
+      const parentModule = modulesData.find(m => m.quizzes.includes(quizId));
+      const moduleId = parentModule?.id || '';
+      const moduleTitle = parentModule?.title || '';
+      saveScoreToSupabase(user, quizId, quizTitle, score, total, moduleId, moduleTitle);
     }
     if (passed) {
       setTimeout(() => {

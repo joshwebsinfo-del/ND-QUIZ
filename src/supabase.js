@@ -1,5 +1,5 @@
 ﻿import { createClient } from '@supabase/supabase-js';
-import { getQuizById } from './data/modules';
+import { modulesData, getQuizById } from './data/modules';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
@@ -27,37 +27,126 @@ const loadLocalProgress = (userId) => {
   }
 };
 
+const getModuleForQuiz = (quizId) => {
+  return modulesData.find((module) => module.quizzes.includes(quizId));
+};
+
+const normalizeLeaderboardRow = (row) => {
+  const displayName = row.display_name || row.displayName || row.email || 'Student';
+  const quizId = row.quiz_id || row.quizId || '';
+  const module = getModuleForQuiz(quizId) || {};
+
+  return {
+    user_id: row.user_id || row.userId || '',
+    display_name: displayName,
+    avatar_url: row.avatar_url || row.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=4f46e5&color=fff`,
+    email: row.email || '',
+    quiz_id: quizId,
+    quiz_title: row.quiz_title || row.quizTitle || module.quiz_title || '',
+    module_id: row.module_id || row.moduleId || module.id || 'module-unknown',
+    module_title: row.module_title || row.moduleTitle || module.title || 'Unknown Module',
+    score: Number(row.score) || 0,
+    total: Number(row.total) || 0,
+    percentage: Number(row.percentage) || 0,
+    completed_at: row.completed_at || row.completedAt || ''
+  };
+};
+
+const aggregateLeaderboardRows = (rows) => {
+  const moduleBuckets = {};
+
+  rows.forEach((row) => {
+    const normalized = normalizeLeaderboardRow(row);
+    const moduleKey = normalized.module_id || 'module-unknown';
+    const completedAt = normalized.completed_at || '';
+
+    if (!moduleBuckets[moduleKey]) {
+      moduleBuckets[moduleKey] = {
+        module_id: normalized.module_id,
+        module_title: normalized.module_title,
+        rows: {},
+      };
+    }
+
+    const bucket = moduleBuckets[moduleKey].rows;
+    const userKey = normalized.user_id || normalized.email || normalized.display_name;
+
+    if (!bucket[userKey]) {
+      bucket[userKey] = {
+        user_id: normalized.user_id,
+        display_name: normalized.display_name,
+        avatar_url: normalized.avatar_url,
+        email: normalized.email,
+        module_id: normalized.module_id,
+        module_title: normalized.module_title,
+        best_percentage: normalized.percentage,
+        best_score: normalized.score,
+        best_total: normalized.total,
+        quizzes_completed: 1,
+        latest_percentage: normalized.percentage,
+        latest_quiz_title: normalized.quiz_title,
+        latest_played: completedAt,
+      };
+      return;
+    }
+
+    bucket[userKey].quizzes_completed += 1;
+
+    if (normalized.percentage > bucket[userKey].best_percentage) {
+      bucket[userKey].best_percentage = normalized.percentage;
+      bucket[userKey].best_score = normalized.score;
+      bucket[userKey].best_total = normalized.total;
+    }
+
+    if (completedAt && (!bucket[userKey].latest_played || completedAt > bucket[userKey].latest_played)) {
+      bucket[userKey].latest_played = completedAt;
+      bucket[userKey].latest_percentage = normalized.percentage;
+      bucket[userKey].latest_quiz_title = normalized.quiz_title;
+    }
+  });
+
+  return Object.values(moduleBuckets).map((module) => ({
+    module_id: module.module_id,
+    module_title: module.module_title,
+    rows: Object.values(module.rows)
+      .sort((a, b) => {
+        if (b.best_percentage !== a.best_percentage) return b.best_percentage - a.best_percentage;
+        if (b.quizzes_completed !== a.quizzes_completed) return b.quizzes_completed - a.quizzes_completed;
+        return (b.latest_played || '') > (a.latest_played || '') ? 1 : -1;
+      })
+      .slice(0, 20),
+  }));
+};
+
 const buildLocalLeaderboard = () => {
   const accounts = loadLocalAccounts();
-  const leaderboard = [];
+  const rows = [];
 
   accounts.forEach((account) => {
     const progress = loadLocalProgress(account.id);
     Object.entries(progress).forEach(([quizId, entry]) => {
-      const quiz = getQuizById(quizId);
       if (!entry || typeof entry.percentage !== 'number') return;
-      leaderboard.push({
+      const quiz = getQuizById(quizId);
+      const module = getModuleForQuiz(quizId);
+
+      rows.push({
         user_id: account.id,
         display_name: account.displayName || account.email || 'Student',
-        email: account.email,
         avatar_url: account.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(account.displayName || account.email || 'Student')}&background=4f46e5&color=fff`,
-        quiz_title: quiz?.title || quizId || 'Quiz attempt',
+        email: account.email,
+        quiz_id: quizId,
+        quiz_title: quiz?.title || quizId,
+        module_id: module?.id || 'module-unknown',
+        module_title: module?.title || 'Unknown Module',
         score: entry.score,
         total: entry.total,
         percentage: entry.percentage,
-        completed_at: entry.timestamp || ''
+        completed_at: entry.completedAt || '',
       });
     });
   });
 
-  return leaderboard
-    .reduce((acc, row) => {
-      const key = row.user_id || row.email || row.display_name;
-      if (!acc[key] || row.percentage > acc[key].percentage) {
-        acc[key] = row;
-      }
-      return acc;
-    }, {});
+  return aggregateLeaderboardRows(rows);
 };
 
 const normalizeUser = (supabaseUser) => {
@@ -126,6 +215,8 @@ export const saveScoreToSupabase = async (user, quizId, quizTitle, score, total)
   if (!isConfigured || !user) return;
   const userId = user.id || user.uid;
   const percentage = Math.round((score / total) * 100);
+  const module = getModuleForQuiz(quizId) || {};
+  const completedAt = new Date().toISOString();
 
   try {
     await supabase.from('profiles').upsert({
@@ -142,9 +233,12 @@ export const saveScoreToSupabase = async (user, quizId, quizTitle, score, total)
       avatar_url: user.avatar_url || user.photoURL,
       quiz_id: quizId,
       quiz_title: quizTitle,
+      module_id: module.id || '',
+      module_title: module.title || '',
       score,
       total,
       percentage,
+      completed_at: completedAt,
     });
   } catch (err) {
     console.error('Supabase Save Error:', err);
@@ -152,49 +246,68 @@ export const saveScoreToSupabase = async (user, quizId, quizTitle, score, total)
 };
 
 export const fetchLeaderboard = async () => {
-  const localLeaderboard = Object.values(buildLocalLeaderboard()).sort((a, b) => b.percentage - a.percentage).slice(0, 50);
+  const localLeaderboard = buildLocalLeaderboard();
   if (!isConfigured) {
     return localLeaderboard.length > 0
       ? localLeaderboard
       : [
-          { display_name: 'Alex Dev', quiz_title: 'OOP: Fundamentals', percentage: 95 },
-          { display_name: 'Sarah Admin', quiz_title: 'Database: Fundamentals', percentage: 88 },
-          { display_name: 'Local Tester', quiz_title: 'Hardware Administration', percentage: 75 }
+          {
+            module_id: 'module-oop',
+            module_title: 'OOP',
+            rows: [
+              { display_name: 'Alex Dev', avatar_url: 'https://ui-avatars.com/api/?name=Alex+Dev&background=4f46e5&color=fff', best_percentage: 95, quizzes_completed: 3, latest_percentage: 95, latest_quiz_title: 'OOP: Fundamentals', latest_played: '' }
+            ]
+          },
+          {
+            module_id: 'module-database',
+            module_title: 'Database',
+            rows: [
+              { display_name: 'Sarah Admin', avatar_url: 'https://ui-avatars.com/api/?name=Sarah+Admin&background=4f46e5&color=fff', best_percentage: 88, quizzes_completed: 2, latest_percentage: 88, latest_quiz_title: 'Database: Fundamentals', latest_played: '' }
+            ]
+          },
+          {
+            module_id: 'module-hardware',
+            module_title: 'Hardware',
+            rows: [
+              { display_name: 'Local Tester', avatar_url: 'https://ui-avatars.com/api/?name=Local+Tester&background=4f46e5&color=fff', best_percentage: 75, quizzes_completed: 1, latest_percentage: 75, latest_quiz_title: 'Hardware Administration', latest_played: '' }
+            ]
+          }
         ];
   }
 
   try {
     const { data, error } = await supabase
       .from('quiz_scores')
-      .select('user_id, display_name, avatar_url, email, quiz_title, score, total, percentage, completed_at')
-      .order('percentage', { ascending: false })
-      .limit(100);
+      .select('user_id, display_name, avatar_url, email, quiz_id, quiz_title, module_id, module_title, score, total, percentage, completed_at')
+      .limit(500);
 
     if (error) throw error;
-    const normalized = (data || []).map((row) => ({
-      ...row,
-      percentage: Number(row.percentage) || 0,
-      display_name: row.display_name || row.email || 'Student',
-      avatar_url: row.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(row.display_name || 'Student')}&background=4f46e5&color=fff`,
-      quiz_title: row.quiz_title || 'Quiz attempt',
-    }));
-
-    const grouped = normalized.reduce((acc, row) => {
-      const key = row.user_id || row.email || row.display_name;
-      if (!acc[key] || row.percentage > acc[key].percentage) {
-        acc[key] = row;
-      }
-      return acc;
-    }, {});
-
-    const remoteLeaderboard = Object.values(grouped).sort((a, b) => b.percentage - a.percentage).slice(0, 50);
+    const remoteLeaderboard = aggregateLeaderboardRows(data || []);
     return remoteLeaderboard.length > 0 ? remoteLeaderboard : localLeaderboard;
   } catch (err) {
     console.error('Supabase Fetch Error:', err);
     return localLeaderboard.length > 0 ? localLeaderboard : [
-      { display_name: 'Alex Dev', quiz_title: 'OOP: Fundamentals', percentage: 95 },
-      { display_name: 'Sarah Admin', quiz_title: 'Database: Fundamentals', percentage: 88 },
-      { display_name: 'Local Tester', quiz_title: 'Hardware Administration', percentage: 75 }
+      {
+        module_id: 'module-oop',
+        module_title: 'OOP',
+        rows: [
+          { display_name: 'Alex Dev', avatar_url: 'https://ui-avatars.com/api/?name=Alex+Dev&background=4f46e5&color=fff', best_percentage: 95, quizzes_completed: 3, latest_percentage: 95, latest_quiz_title: 'OOP: Fundamentals', latest_played: '' }
+        ]
+      },
+      {
+        module_id: 'module-database',
+        module_title: 'Database',
+        rows: [
+          { display_name: 'Sarah Admin', avatar_url: 'https://ui-avatars.com/api/?name=Sarah+Admin&background=4f46e5&color=fff', best_percentage: 88, quizzes_completed: 2, latest_percentage: 88, latest_quiz_title: 'Database: Fundamentals', latest_played: '' }
+        ]
+      },
+      {
+        module_id: 'module-hardware',
+        module_title: 'Hardware',
+        rows: [
+          { display_name: 'Local Tester', avatar_url: 'https://ui-avatars.com/api/?name=Local+Tester&background=4f46e5&color=fff', best_percentage: 75, quizzes_completed: 1, latest_percentage: 75, latest_quiz_title: 'Hardware Administration', latest_played: '' }
+        ]
+      }
     ];
   }
 };

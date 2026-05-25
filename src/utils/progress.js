@@ -15,10 +15,11 @@ export const saveProgress = (userId, quizId, score, total) => {
   const currentProgress = getProgress(userId);
   const percentage = (score / total) * 100;
   const passed = percentage >= PASS_THRESHOLD; // 85% to pass and unlock next
+  const completedAt = new Date().toISOString();
 
-  // Only update if they got a higher score or it's their first time
-  if (!currentProgress[quizId] || currentProgress[quizId].score < score) {
-    currentProgress[quizId] = { score, total, percentage, passed };
+  // Update if it's their first time, a higher score, or the same score on a later attempt.
+  if (!currentProgress[quizId] || currentProgress[quizId].score <= score) {
+    currentProgress[quizId] = { score, total, percentage, passed, completedAt };
     localStorage.setItem(`quiz_progress_${userId}`, JSON.stringify(currentProgress));
   }
 };
