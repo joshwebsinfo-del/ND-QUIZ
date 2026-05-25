@@ -50,10 +50,15 @@ create policy "Authenticated update module_tutorials" on module_tutorials for up
 create policy "Authenticated delete module_tutorials" on module_tutorials for delete using (auth.role() = 'authenticated');
 alter table module_tutorials enable row level security;
 
--- Enable real-time for quiz_scores and module_tutorials only if not already added
+-- Ensure the realtime publication exists and add tables when missing
 DO
 $$
 BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime'
+  ) THEN
+    CREATE PUBLICATION supabase_realtime;
+  END IF;
   IF NOT EXISTS (
     SELECT 1
     FROM pg_publication_tables
