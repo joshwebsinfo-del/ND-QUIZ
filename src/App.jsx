@@ -69,8 +69,8 @@ function App() {
           <Route path="/privacy" element={<PrivateRoute user={user}><PrivacyPolicy /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <Footer />
       </Router>
-      <Footer />
     </ThemeProvider>
   );
 }
