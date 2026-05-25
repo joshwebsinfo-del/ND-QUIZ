@@ -80,29 +80,34 @@ export default function Leaderboard() {
               </div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>League-style ranking</div>
             </div>
-            <div className="lb-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <div className="lb-row lb-row-head" style={{ display: 'grid', gridTemplateColumns: '40px 2fr 80px 70px 70px 70px', gap: '0.75rem', padding: '0.75rem 0', borderBottom: '1px solid var(--border-color)', fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+            <div className="lb-table">
+              <div className="lb-row lb-row-head">
                 <div>#</div>
                 <div>Player</div>
                 <div>Best %</div>
-                <div>Quizzes</div>
-                <div>Latest</div>
-                <div>Played</div>
+                <div className="lb-hidden-sm">Quizzes</div>
+                <div className="lb-hidden-sm">Latest</div>
+                <div className="lb-hidden-sm">Played</div>
               </div>
               {mod.rows.map((row, index) => (
-                <div key={`${mod.module_id}-${row.user_id || row.email}-${index}`} className="lb-row" style={{ display: 'grid', gridTemplateColumns: '40px 2fr 80px 70px 70px 70px', gap: '0.75rem', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid rgba(148,163,184,0.12)' }}>
-                  <div style={{ fontWeight: 700 }}>{index + 1}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <img src={row.avatar_url} alt={row.display_name} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                <div key={`${mod.module_id}-${row.user_id || row.email}-${index}`} className="lb-row">
+                  <div className="lb-rank" style={{ fontWeight: 700 }}>{index + 1}</div>
+                  <div className="lb-player">
+                    <img src={row.avatar_url} alt={row.display_name} className="lb-avatar" />
                     <div>
-                      <div style={{ fontWeight: 600 }}>{row.display_name}</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{row.latest_quiz_title || 'Quiz'}</div>
+                      <div className="lb-name">{row.display_name}</div>
+                      <div className="lb-quiz">{row.latest_quiz_title || 'Quiz'}</div>
                     </div>
                   </div>
-                  <div style={{ fontWeight: 700 }}>{row.best_percentage}%</div>
-                  <div>{row.quizzes_completed}</div>
-                  <div>{row.latest_percentage}%</div>
-                  <div>{formatDate(row.latest_played)}</div>
+                  <div className="lb-best" style={{ fontWeight: 700 }}>{row.best_percentage}%</div>
+                  <div className="lb-hidden-sm">{row.quizzes_completed}</div>
+                  <div className="lb-hidden-sm">{row.latest_percentage}%</div>
+                  <div className="lb-hidden-sm">{formatDate(row.latest_played)}</div>
+                  <div className="lb-mobile-meta">
+                    <span>{row.quizzes_completed} quizzes</span>
+                    <span>{row.latest_percentage}% latest</span>
+                    <span>{formatDate(row.latest_played)}</span>
+                  </div>
                 </div>
               ))}
             </div>
