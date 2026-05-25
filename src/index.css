@@ -175,6 +175,174 @@ a { text-decoration: none; }
   animation: glow 10s ease infinite;
 }
 
+.admin-panel {
+  padding: 2rem;
+  background: rgba(255,255,255,0.82);
+  border: 1px solid rgba(226,232,240,0.85);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(18px);
+}
+
+.admin-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.75rem;
+}
+
+.admin-panel-description {
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+  max-width: 760px;
+  line-height: 1.75;
+}
+
+.admin-tutorial-section {
+  margin-bottom: 2rem;
+  padding: 2rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(226,232,240,0.85);
+  background: rgba(255,255,255,0.94);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-tutorial-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-tutorial-info {
+  min-width: 260px;
+  flex: 1 1 320px;
+}
+
+.admin-tutorial-info h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-tutorial-info p {
+  color: var(--text-muted);
+  line-height: 1.75;
+  font-size: 0.95rem;
+}
+
+.admin-form-grid {
+  min-width: 260px;
+  flex: 1 1 420px;
+  display: grid;
+  gap: 0.95rem;
+}
+
+.admin-form-grid label span {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.admin-tutorial-results {
+  margin-top: 1.75rem;
+}
+
+.admin-tutorial-results h4 {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+.admin-tutorial-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(226,232,240,0.9);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.admin-tutorial-item strong {
+  display: block;
+  font-size: 0.98rem;
+  margin-bottom: 0.25rem;
+}
+
+.admin-tutorial-item .link-secondary {
+  color: var(--primary);
+  font-size: 0.88rem;
+}
+
+.admin-tutorial-item .btn {
+  padding: 0.55rem 0.95rem;
+}
+
+.admin-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-table-meta {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.admin-table-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: calc(var(--radius) + 4px);
+  overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-table thead {
+  background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.08));
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 1rem 0.95rem;
+  border-bottom: 1px solid rgba(226,232,240,0.9);
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.admin-table th {
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(99,102,241,0.08);
+}
+
+.admin-table td:last-child {
+  white-space: nowrap;
+}
+
+.admin-panel .input-field {
+  background: rgba(255,255,255,0.98);
+}
+
 .rainbow-text {
   background: linear-gradient(90deg, #4338ca, #10b981, #f59e0b, #ec4899, #4338ca);
   background-size: 300% 300%;

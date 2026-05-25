@@ -142,26 +142,26 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="admin-panel" style={{ padding: '2rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.5rem' }}>
+    <div className="admin-panel">
+      <div className="admin-panel-header">
         <div>
           <h2 className="rainbow-text">Admin Panel</h2>
-          <p style={{ color: 'var(--text-muted)', margin: 0 }}>View user performance, leaderboards, and tutorial assignments for each module.</p>
+          <p className="admin-panel-description">View user performance, leaderboards, and tutorial assignments for each module.</p>
         </div>
-        <div className="admin-status-badge" style={{ marginLeft: 'auto' }}>
+        <div className="admin-status-badge">
           Admin All Rights
         </div>
       </div>
 
-      <section className="admin-tutorial-section" style={{ marginBottom: '2rem', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border-color)', background: 'var(--bg-card)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-          <div style={{ minWidth: '260px', flex: '1 1 320px' }}>
-            <h3 style={{ margin: '0 0 0.5rem 0' }}>Module tutorial manager</h3>
-            <p style={{ margin: 0, color: 'var(--text-muted)' }}>Choose a module and topic, add a YouTube link, and users will see the tutorial inside the module page.</p>
+      <section className="admin-tutorial-section">
+        <div className="admin-tutorial-top">
+          <div className="admin-tutorial-info">
+            <h3>Module tutorial manager</h3>
+            <p>Choose a module and topic, add a YouTube link, and users will see the tutorial inside the module page.</p>
           </div>
-          <div style={{ minWidth: '260px', flex: '1 1 420px', display: 'grid', gap: '0.75rem' }}>
+          <div className="admin-form-grid">
             <label>
-              <span style={{ display: 'block', marginBottom: '0.3rem', fontWeight: 600 }}>Module</span>
+              <span>Module</span>
               <select className="input-field" value={moduleId} onChange={handleModuleChange}>
                 {modulesData.map((mod) => (
                   <option key={mod.id} value={mod.id}>{mod.title}</option>
@@ -169,7 +169,7 @@ const AdminPanel = () => {
               </select>
             </label>
             <label>
-              <span style={{ display: 'block', marginBottom: '0.3rem', fontWeight: 600 }}>Topic</span>
+              <span>Topic</span>
               <select className="input-field" value={quizId} onChange={(e) => setQuizId(e.target.value)}>
                 {moduleQuizzes.map((quiz) => (
                   <option key={quiz.id} value={quiz.id}>{quiz.title}</option>
@@ -177,7 +177,7 @@ const AdminPanel = () => {
               </select>
             </label>
             <label>
-              <span style={{ display: 'block', marginBottom: '0.3rem', fontWeight: 600 }}>YouTube tutorial link</span>
+              <span>YouTube tutorial link</span>
               <input
                 className="input-field"
                 type="url"
@@ -192,8 +192,8 @@ const AdminPanel = () => {
           </div>
         </div>
 
-        <div style={{ marginTop: '1.5rem' }}>
-          <h4 style={{ marginBottom: '0.75rem' }}>Assigned tutorials</h4>
+        <div className="admin-tutorial-results">
+          <h4>Assigned tutorials</h4>
           {renderTutorialList()}
         </div>
       </section>
@@ -204,9 +204,9 @@ const AdminPanel = () => {
         <div style={{ padding: '1rem', background: '#fde2e2', borderRadius: '1rem', color: '#b91c1c' }}>{error}</div>
       ) : (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <div style={{ color: 'var(--text-muted)' }}>{leaderboard.length} entries</div>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="admin-table-header">
+            <div className="admin-table-meta">{leaderboard.length} entries</div>
+            <div className="admin-table-actions">
               <button className="btn btn-outline btn-sm" onClick={exportCSV}>Export CSV</button>
               <button className="btn btn-outline btn-sm" onClick={async () => { const p = await fetchProfiles(); alert('Profiles fetched: ' + p.length); }}>Fetch Profiles</button>
             </div>
