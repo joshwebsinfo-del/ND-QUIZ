@@ -105,7 +105,7 @@ BEGIN
     WHERE c.relname = 'module_tutorials'
       AND p.polname = 'Authenticated modify module_tutorials'
   ) THEN
-    CREATE POLICY "Authenticated modify module_tutorials" ON module_tutorials FOR INSERT TO authenticated WITH CHECK (auth.role() = 'authenticated');
+    CREATE POLICY "Authenticated modify module_tutorials" ON module_tutorials FOR INSERT TO public WITH CHECK (true);
   END IF;
 
   IF NOT EXISTS (
@@ -115,7 +115,7 @@ BEGIN
     WHERE c.relname = 'module_tutorials'
       AND p.polname = 'Authenticated update module_tutorials'
   ) THEN
-    CREATE POLICY "Authenticated update module_tutorials" ON module_tutorials FOR UPDATE USING (auth.role() = 'authenticated');
+    CREATE POLICY "Authenticated update module_tutorials" ON module_tutorials FOR UPDATE TO public USING (true);
   END IF;
 
   IF NOT EXISTS (
@@ -125,7 +125,7 @@ BEGIN
     WHERE c.relname = 'module_tutorials'
       AND p.polname = 'Authenticated delete module_tutorials'
   ) THEN
-    CREATE POLICY "Authenticated delete module_tutorials" ON module_tutorials FOR DELETE USING (auth.role() = 'authenticated');
+    CREATE POLICY "Authenticated delete module_tutorials" ON module_tutorials FOR DELETE TO public USING (true);
   END IF;
 END
 $$;
