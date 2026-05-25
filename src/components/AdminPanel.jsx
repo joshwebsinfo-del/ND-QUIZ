@@ -1,10 +1,42 @@
 ﻿import React from 'react';
-import { supabase, deleteScore, deleteUser, fetchProfiles } from '../supabase';
+import {
+  supabase,
+  deleteScore,
+  deleteUser,
+  fetchProfiles,
+  getTutorialsFromSupabase,
+  saveTutorialToSupabase,
+  deleteTutorialFromSupabase,
+} from '../supabase';
+import { modulesData, getAllQuizzes } from '../data/modules';
+import { getYouTubeEmbedUrl } from '../utils/tutorials';
 
 const AdminPanel = () => {
   const [leaderboard, setLeaderboard] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
+  const [moduleId, setModuleId] = React.useState(modulesData[0]?.id || '');
+  const [quizId, setQuizId] = React.useState('');
+  const [videoUrl, setVideoUrl] = React.useState('');
+  const [tutorials, setTutorials] = React.useState([]);
+  const [saving, setSaving] = React.useState(false);
+
+  const allQuizzes = getAllQuizzes();
+  const currentModule = modulesData.find((mod) => mod.id === moduleId) || modulesData[0];
+  const moduleQuizzes = currentModule?.quizzes
+    .map((id) => allQuizzes.find((q) => q.id === id))
+    .filter(Boolean);
+
+  React.useEffect(() => {
+    if (moduleQuizzes.length > 0 && !moduleQuizzes.find((q) => q.id === quizId)) {
+      setQuizId(moduleQuizzes[0]?.id || '');
+    }
+  }, [moduleId, moduleQuizzes, quizId]);
+
+  const loadTutorials = async () => {
+    const tutorials = await getTutorialsFromSupabase();
+    setTutorials(tutorials);
+  };
 
   React.useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -29,7 +61,12 @@ const AdminPanel = () => {
     };
 
     fetchLeaderboard();
+    loadTutorials();
   }, []);
+
+  const refreshTutorials = async () => {
+    await loadTutorials();
+  };
 
   const exportCSV = () => {
     if (!leaderboard || leaderboard.length === 0) { alert('No data to export'); return; }
@@ -41,19 +78,67 @@ const AdminPanel = () => {
     const a = document.createElement('a'); a.href = url; a.download = 'leaderboard.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   };
 
-  const handleDeleteScore = async (row) => {
-    if (!confirm(`Delete score for ${row.display_name} (${Number(row.percentage)||0}%)?`)) return;
-    const criteria = { user_id: row.user_id, quiz_title: row.quiz_title, completed_at: row.completed_at };
-    const res = await deleteScore(criteria);
-    if (res.error) { alert('Delete failed: ' + (res.error.message || res.error)); return; }
-    setLeaderboard(prev => prev.filter(p => !(p.user_id === row.user_id && p.quiz_title === row.quiz_title && p.completed_at === row.completed_at)));
+  const handleSaveTutorial = async () => {
+    if (!moduleId || !quizId || !videoUrl.trim()) {
+      alert('Please choose a module, topic, and paste a YouTube tutorial link.');
+      return;
+    }
+
+    const embedUrl = getYouTubeEmbedUrl(videoUrl);
+    if (!embedUrl) {
+      alert('Please provide a valid YouTube link.');
+      return;
+    }
+
+    setSaving(true);
+    await saveTutorialToSupabase({ moduleId, quizId, sourceUrl: videoUrl.trim(), videoEmbedUrl: embedUrl });
+    await refreshTutorials();
+    setSaving(false);
+    setVideoUrl('');
+    alert('Tutorial saved. It will now appear for users on that module.');
   };
 
-  const handleDeleteUser = async (userId) => {
-    if (!confirm(`Delete user ${userId} and all their data? This cannot be undone.`)) return;
-    const res = await deleteUser(userId);
-    if (res.error) { alert('Delete failed: ' + (res.error.message || res.error)); return; }
-    setLeaderboard(prev => prev.filter(p => p.user_id !== userId));
+  const handleRemoveTutorial = async (entry) => {
+    if (!confirm('Remove tutorial for this topic?')) return;
+    await deleteTutorialFromSupabase(entry.moduleId, entry.quizId);
+    await refreshTutorials();
+  };
+
+  const renderTutorialList = () => {
+    if (tutorials.length === 0) {
+      return <p style={{ color: 'var(--text-muted)' }}>No tutorials have been added yet.</p>;
+    }
+
+    return (
+      <div className="admin-tutorial-list">
+        {tutorials.map((entry) => {
+          const module = modulesData.find((mod) => mod.id === entry.moduleId);
+          const quiz = allQuizzes.find((q) => q.id === entry.quizId);
+          return (
+            <div key={`${entry.moduleId}-${entry.quizId}`} className="admin-tutorial-item">
+              <div>
+                <strong>{module?.title || entry.moduleId}</strong>
+                <div style={{ color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                  Topic: {quiz?.title || entry.quizId}
+                </div>
+                <a href={entry.sourceUrl} target="_blank" rel="noreferrer" className="link-secondary">View source link</a>
+              </div>
+              <button className="btn btn-outline btn-sm" onClick={() => handleRemoveTutorial(entry)}>Remove</button>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const handleModuleChange = (event) => {
+    setModuleId(event.target.value);
+    const nextModule = modulesData.find((m) => m.id === event.target.value);
+    if (nextModule?.quizzes?.length > 0) {
+      setQuizId(nextModule.quizzes[0]);
+    } else {
+      setQuizId('');
+    }
   };
 
   return (
@@ -61,12 +146,57 @@ const AdminPanel = () => {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.5rem' }}>
         <div>
           <h2 className="rainbow-text">Admin Panel</h2>
-          <p style={{ color: 'var(--text-muted)', margin: 0 }}>View user performance, leaderboards, and recent quiz activity.</p>
+          <p style={{ color: 'var(--text-muted)', margin: 0 }}>View user performance, leaderboards, and tutorial assignments for each module.</p>
         </div>
         <div className="admin-status-badge" style={{ marginLeft: 'auto' }}>
           Admin All Rights
         </div>
       </div>
+
+      <section className="admin-tutorial-section" style={{ marginBottom: '2rem', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border-color)', background: 'var(--bg-card)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ minWidth: '260px', flex: '1 1 320px' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0' }}>Module tutorial manager</h3>
+            <p style={{ margin: 0, color: 'var(--text-muted)' }}>Choose a module and topic, add a YouTube link, and users will see the tutorial inside the module page.</p>
+          </div>
+          <div style={{ minWidth: '260px', flex: '1 1 420px', display: 'grid', gap: '0.75rem' }}>
+            <label>
+              <span style={{ display: 'block', marginBottom: '0.3rem', fontWeight: 600 }}>Module</span>
+              <select className="input-field" value={moduleId} onChange={handleModuleChange}>
+                {modulesData.map((mod) => (
+                  <option key={mod.id} value={mod.id}>{mod.title}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span style={{ display: 'block', marginBottom: '0.3rem', fontWeight: 600 }}>Topic</span>
+              <select className="input-field" value={quizId} onChange={(e) => setQuizId(e.target.value)}>
+                {moduleQuizzes.map((quiz) => (
+                  <option key={quiz.id} value={quiz.id}>{quiz.title}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span style={{ display: 'block', marginBottom: '0.3rem', fontWeight: 600 }}>YouTube tutorial link</span>
+              <input
+                className="input-field"
+                type="url"
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+              />
+            </label>
+            <button className="btn btn-primary btn-sm" onClick={handleSaveTutorial} disabled={saving}>
+              {saving ? 'Saving...' : 'Save tutorial'}
+            </button>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '1.5rem' }}>
+          <h4 style={{ marginBottom: '0.75rem' }}>Assigned tutorials</h4>
+          {renderTutorialList()}
+        </div>
+      </section>
 
       {loading ? (
         <p>Loading performance data...</p>

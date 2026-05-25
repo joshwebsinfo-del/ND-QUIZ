@@ -35,3 +35,21 @@ create policy "Users upsert own profile" on profiles for all using (true);
 -- Enable RLS
 alter table quiz_scores enable row level security;
 alter table profiles enable row level security;
+
+-- Module tutorials table
+create table if not exists module_tutorials (
+  id uuid default gen_random_uuid() primary key,
+  module_id text not null,
+  quiz_id text not null,
+  source_url text not null,
+  video_embed_url text not null,
+  saved_at timestamp with time zone default now()
+);
+
+-- Enable real-time and public read access for tutorials
+alter publication supabase_realtime add table module_tutorials;
+create policy "Public read module_tutorials" on module_tutorials for select using (true);
+create policy "Authenticated modify module_tutorials" on module_tutorials for insert using (auth.role() = 'authenticated');
+create policy "Authenticated update module_tutorials" on module_tutorials for update using (auth.role() = 'authenticated');
+create policy "Authenticated delete module_tutorials" on module_tutorials for delete using (auth.role() = 'authenticated');
+alter table module_tutorials enable row level security;

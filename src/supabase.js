@@ -365,3 +365,100 @@ export const fetchProfiles = async () => {
     return [];
   }
 };
+
+const TUTORIALS_TABLE = 'module_tutorials';
+
+const parseLocalTutorials = () => {
+  try {
+    return JSON.parse(localStorage.getItem('quiz_module_tutorials') || '[]') || [];
+  } catch {
+    return [];
+  }
+};
+
+const normalizeTutorialRow = (row) => ({
+  moduleId: row.module_id || row.moduleId,
+  quizId: row.quiz_id || row.quizId,
+  sourceUrl: row.source_url || row.sourceUrl,
+  videoEmbedUrl: row.video_embed_url || row.videoEmbedUrl,
+  savedAt: row.saved_at || row.savedAt || '',
+});
+
+export const getTutorialsFromSupabase = async () => {
+  const localData = parseLocalTutorials().map(normalizeTutorialRow);
+
+  if (!isConfigured) {
+    return localData;
+  }
+
+  try {
+    const { data, error } = await supabase.from(TUTORIALS_TABLE).select('*');
+    if (error) throw error;
+    const remote = (data || []).map(normalizeTutorialRow);
+    return remote.length > 0 ? remote : localData;
+  } catch (err) {
+    console.error('getTutorialsFromSupabase error', err);
+    return localData;
+  }
+};
+
+export const getTutorialsForModuleFromSupabase = async (moduleId) => {
+  const tutorials = await getTutorialsFromSupabase();
+  return tutorials.filter((entry) => entry.moduleId === moduleId);
+};
+
+export const saveTutorialToSupabase = async (tutorial) => {
+  const entry = {
+    module_id: tutorial.moduleId,
+    quiz_id: tutorial.quizId,
+    source_url: tutorial.sourceUrl,
+    video_embed_url: tutorial.videoEmbedUrl,
+    saved_at: tutorial.savedAt || new Date().toISOString(),
+  };
+
+  const saveLocal = () => {
+    const stored = parseLocalTutorials();
+    const existingIndex = stored.findIndex((item) => item.module_id === entry.module_id && item.quiz_id === entry.quiz_id);
+    if (existingIndex >= 0) {
+      stored[existingIndex] = entry;
+    } else {
+      stored.push(entry);
+    }
+    localStorage.setItem('quiz_module_tutorials', JSON.stringify(stored));
+    return stored.map(normalizeTutorialRow);
+  };
+
+  if (!isConfigured) {
+    return saveLocal();
+  }
+
+  try {
+    const { error } = await supabase.from(TUTORIALS_TABLE).upsert([entry], { onConflict: ['module_id', 'quiz_id'] });
+    if (error) throw error;
+    return await getTutorialsFromSupabase();
+  } catch (err) {
+    console.error('saveTutorialToSupabase error', err);
+    return saveLocal();
+  }
+};
+
+export const deleteTutorialFromSupabase = async (moduleId, quizId) => {
+  const deleteLocal = () => {
+    const stored = parseLocalTutorials().filter((item) => !(item.module_id === moduleId && item.quiz_id === quizId));
+    localStorage.setItem('quiz_module_tutorials', JSON.stringify(stored));
+    return stored.map(normalizeTutorialRow);
+  };
+
+  if (!isConfigured) {
+    return deleteLocal();
+  }
+
+  try {
+    const { error } = await supabase.from(TUTORIALS_TABLE).delete().match({ module_id: moduleId, quiz_id: quizId });
+    if (error) throw error;
+    return await getTutorialsFromSupabase();
+  } catch (err) {
+    console.error('deleteTutorialFromSupabase error', err);
+    return deleteLocal();
+  }
+};
